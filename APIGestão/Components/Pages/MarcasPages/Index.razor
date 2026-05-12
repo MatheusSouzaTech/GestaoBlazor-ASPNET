@@ -1,0 +1,62 @@
+@page "/marcas"
+@rendermode InteractiveServer
+@using APIGestão.API.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<PageTitle>Marcas</PageTitle>
+
+<h1>Marcas</h1>
+
+<p>
+    <a href="marcas/create" class="btn btn-primary">+ Nova Marca</a>
+</p>
+
+@if (marcas == null)
+{
+    <p class="loading"><em>Carregando...</em></p>
+}
+else if (!marcas.Any())
+{
+    <p>Nenhuma marca cadastrada.</p>
+}
+else
+{
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in marcas)
+                {
+                    <tr>
+                        <td>@p.ID</td>
+                        <td>@p.Nome</td>
+                        <td>
+                            <div class="table-actions">
+                                <a href="@($"produtos/edit?id={p.ID}")" class="action-edit">Editar</a>
+                                <a href="@($"produtos/details?id={p.ID}")" class="action-detail">Detalhes</a>
+                                <a href="@($"produtos/delete?id={p.ID}")" class="action-delete">Excluir</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Marcas>? marcas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        marcas = await Http.GetFromJsonAsync<List<Marcas>>("api/marcas");
+    }
+}
+

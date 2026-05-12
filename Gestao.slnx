@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/Solution Items/" />
+  <Project Path="APIGestão/APIGestão.csproj" />
+  <Project Path="Gestao/Gestao.csproj" />
+</Solution>

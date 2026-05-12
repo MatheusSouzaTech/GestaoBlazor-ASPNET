@@ -1,0 +1,81 @@
+@page "/transportadoras/create"
+@rendermode InteractiveServer
+@using APIGestão.API.Models
+@using Microsoft.AspNetCore.Components.Forms
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<PageTitle>Nova Transportadora</PageTitle>
+
+<h1>Nova Transportadora</h1>
+
+@if (!string.IsNullOrEmpty(erro))
+{
+    <div class="alert alert-danger">@erro</div>
+}
+
+<div class="form-card">
+    <EditForm Model="Transportadora" OnValidSubmit="AddTransportadora">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="validation-errors" role="alert" />
+
+        <div class="mb-3">
+            <label for="razaosocial" class="form-label">Razão Social</label>
+            <InputText id="razaosocial" @bind-Value="Transportadora.RazaoSocial" class="form-control" />
+            <ValidationMessage For="() => Transportadora.RazaoSocial" class="text-danger" />
+        </div>
+        <div class="mb-3">
+            <label for="nomefantasia" class="form-label">Nome Fantasia</label>
+            <InputText id="nomefantasia" @bind-Value="Transportadora.NomeFantasia" class="form-control" />
+            <ValidationMessage For="() => Transportadora.NomeFantasia" class="text-danger" />
+        </div>
+        <div class="mb-3">
+            <label for="telefone" class="form-label">Telefone</label>
+            <InputText id="telefone" @bind-Value="Transportadora.Telefone" class="form-control" />
+            <ValidationMessage For="() => Transportadora.Telefone" class="text-danger" />
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <InputText id="email" @bind-Value="Transportadora.Email" class="form-control" />
+            <ValidationMessage For="() => Transportadora.Email" class="text-danger" />
+        </div>
+        <div class="mb-3">
+            <label for="tipotransporte" class="form-label">Tipo Transporte</label>
+            <InputText id="tipotransporte" @bind-Value="Transportadora.TipoTransporte" class="form-control" />
+            <ValidationMessage For="() => Transportadora.TipoTransporte" class="text-danger" />
+        </div>
+        <div class="mb-3">
+            <label for="prazoentrega" class="form-label">Prazo Entrega (dias)</label>
+            <InputNumber id="prazoentrega" @bind-Value="Transportadora.PrazoEntrega" class="form-control" />
+            <ValidationMessage For="() => Transportadora.PrazoEntrega" class="text-danger" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Status</label><br />
+            <InputCheckbox id="status" @bind-Value="Transportadora.Status" class="form-check-input" />
+            <label for="status" style="margin-left: 0.5rem;">Ativo</label>
+        </div>
+        <div style="display:flex; gap:0.5rem; margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="/transportadoras" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private Transportadora Transportadora { get; set; } = new();
+    private string? erro;
+
+    private async Task AddTransportadora()
+    {
+        var response = await Http.PostAsJsonAsync("api/transportadora", Transportadora);
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/transportadoras");
+        }
+        else
+        {
+            erro = await response.Content.ReadAsStringAsync();
+        }
+    }
+}

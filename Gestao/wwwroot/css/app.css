@@ -1,0 +1,115 @@
+/* BASE */
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: #f6f8fb;
+    color: #1f2937;
+}
+
+/* LAYOUT */
+.app-layout {
+    display: flex;
+    height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 220px;
+    background: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    padding: 20px;
+}
+
+/* MENU */
+.nav-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+    .nav-menu .logo {
+        margin-bottom: 20px;
+    }
+
+::deep .nav-menu a {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    color: #6b7280;
+    text-decoration: none;
+}
+
+    ::deep .nav-menu a:hover {
+        background: #f3f4f6;
+    }
+
+    ::deep .nav-menu a.active {
+        background: #e0e7ff;
+        color: #4338ca;
+    }
+
+/* MAIN */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* TOPBAR */
+.topbar {
+    height: 60px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+}
+
+/* BOTÃO */
+.btn-export {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+}
+
+/* CONTENT */
+.content {
+    padding: 20px;
+}
+
+/* CARDS */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+/* CHARTS */
+.charts {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 15px;
+}
+
+.chart {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+}
+
+    .chart.large {
+        grid-column: span 2;
+    }

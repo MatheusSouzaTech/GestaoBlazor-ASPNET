@@ -1,0 +1,55 @@
+@page "/produtos/details"
+@rendermode InteractiveServer
+@using APIGestão.API.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<PageTitle>Detalhes do Produto</PageTitle>
+
+<h1>Detalhes do Produto</h1>
+
+@if (produto is null)
+{
+    <p class="loading"><em>Carregando...</em></p>
+}
+else
+{
+    <div class="detail-card">
+        <dl class="row">
+            <dt>Nome</dt>
+            <dd>@produto.Nome</dd>
+            <dt>ID Marca</dt>
+            <dd>@produto.IDMarca</dd>
+            <dt>Quantidade</dt>
+            <dd>@produto.Quantidade</dd>
+            <dt>Tipo Mercadoria</dt>
+            <dd>@produto.TipoMercadoria</dd>
+            <dt>Status</dt>
+            <dd>
+                <span class="@(produto.Status ? "badge-ativo" : "badge-inativo")">
+                    @(produto.Status ? "Ativo" : "Inativo")
+                </span>
+            </dd>
+            <dt>Data Cadastro</dt>
+            <dd>@produto.DataCadastro?.ToString("dd/MM/yyyy")</dd>
+        </dl>
+        <div style="margin-top:1.5rem; display:flex; gap:0.5rem;">
+            <a href="@($"/produtos/edit?id={produto.ID}")" class="btn btn-primary">Editar</a>
+            <a href="/produtos" class="btn btn-secondary">Voltar à Lista</a>
+        </div>
+    </div>
+}
+
+@code {
+    private Produtos? produto;
+
+    [SupplyParameterFromQuery]
+    private int ID { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        produto = await Http.GetFromJsonAsync<Produtos>($"api/produtos/{ID}");
+        if (produto is null)
+            NavigationManager.NotFound();
+    }
+}

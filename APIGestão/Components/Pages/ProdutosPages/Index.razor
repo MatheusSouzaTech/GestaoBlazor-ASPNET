@@ -1,0 +1,74 @@
+@page "/produtos"
+@rendermode InteractiveServer
+@using APIGestão.API.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<PageTitle>Produtos</PageTitle>
+
+<h1>Produtos</h1>
+
+<p>
+    <a href="produtos/create" class="btn btn-primary">+ Novo Produto</a>
+</p>
+
+@if (produtos == null)
+{
+    <p class="loading"><em>Carregando...</em></p>
+}
+else if (!produtos.Any())
+{
+    <p>Nenhum produto cadastrado.</p>
+}
+else
+{
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>ID Marca</th>
+                    <th>Quantidade</th>
+                    <th>Tipo Mercadoria</th>
+                    <th>Status</th>
+                    <th>Data Cadastro</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in produtos)
+                {
+                    <tr>
+                        <td>@p.Nome</td>
+                        <td>@p.IDMarca</td>
+                        <td>@p.Quantidade</td>
+                        <td>@p.TipoMercadoria</td>
+                        <td>
+                            <span class="@(p.Status ? "badge-ativo" : "badge-inativo")">
+                                @(p.Status ? "Ativo" : "Inativo")
+                            </span>
+                        </td>
+                        <td>@p.DataCadastro?.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            <div class="table-actions">
+                                <a href="@($"produtos/edit?id={p.ID}")" class="action-edit">Editar</a>
+                                <a href="@($"produtos/details?id={p.ID}")" class="action-detail">Detalhes</a>
+                                <a href="@($"produtos/delete?id={p.ID}")" class="action-delete">Excluir</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Produtos>? produtos;
+
+    protected override async Task OnInitializedAsync()
+    {
+        produtos = await Http.GetFromJsonAsync<List<Produtos>>("api/produtos");
+    }
+}
+

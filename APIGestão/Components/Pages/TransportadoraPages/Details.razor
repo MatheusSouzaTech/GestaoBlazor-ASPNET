@@ -1,0 +1,57 @@
+@page "/transportadoras/details"
+@rendermode InteractiveServer
+@using APIGestão.API.Models
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<PageTitle>Detalhes da Transportadora</PageTitle>
+
+<h1>Detalhes da Transportadora</h1>
+
+@if (transportadora is null)
+{
+    <p class="loading"><em>Carregando...</em></p>
+}
+else
+{
+    <div class="detail-card">
+        <dl class="row">
+            <dt>Razão Social</dt>
+            <dd>@transportadora.RazaoSocial</dd>
+            <dt>Nome Fantasia</dt>
+            <dd>@transportadora.NomeFantasia</dd>
+            <dt>Telefone</dt>
+            <dd>@transportadora.Telefone</dd>
+            <dt>Email</dt>
+            <dd>@transportadora.Email</dd>
+            <dt>Tipo Transporte</dt>
+            <dd>@transportadora.TipoTransporte</dd>
+            <dt>Prazo Entrega</dt>
+            <dd>@transportadora.PrazoEntrega dias</dd>
+            <dt>Status</dt>
+            <dd>
+                <span class="@(transportadora.Status ? "badge-ativo" : "badge-inativo")">
+                    @(transportadora.Status ? "Ativo" : "Inativo")
+                </span>
+            </dd>
+        </dl>
+        <div style="margin-top:1.5rem; display:flex; gap:0.5rem;">
+            <a href="@($"transportadoras/edit?id={transportadora.ID}")" class="btn btn-primary">Editar</a>
+            <a href="/transportadoras" class="btn btn-secondary">Voltar</a>
+        </div>
+    </div>
+}
+
+@code {
+    private Transportadora? transportadora;
+
+    [SupplyParameterFromQuery]
+    private int ID { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        transportadora = await Http.GetFromJsonAsync<Transportadora>($"api/transportadora/{ID}");
+        if (transportadora is null)
+            NavigationManager.NotFound();
+    }
+}

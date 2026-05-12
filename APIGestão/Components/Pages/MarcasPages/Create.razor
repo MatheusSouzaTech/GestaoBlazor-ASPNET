@@ -1,0 +1,53 @@
+@page "/marcas/create"
+@rendermode InteractiveServer
+@using APIGestão.API.Models
+@using Microsoft.AspNetCore.Components.Forms
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+
+<PageTitle>Marcas</PageTitle>
+
+<h1>Nova Marca</h1>
+
+@if (!string.IsNullOrEmpty(erro))
+{
+    <div class="alert alert-danger">@erro</div>
+}
+
+<div class="form-card">
+    <EditForm Model="Marca" OnValidSubmit="AddMarca">
+        <DataAnnotationsValidator />
+        <ValidationSummary class="validation-errors" role="alert"/>
+
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome</label>
+            <InputText id="nome" @bind-Value="Marca.Nome" class="form-control" />
+            <ValidationMessage For="() => Marca.Nome" class="text-danger" />
+        </div>
+
+        <div style="display:flex; gap:0.5rem; margin-top:1.5rem;">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="/produtos" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private Marcas Marca { get; set; } = new();
+
+    private string? erro;
+
+    private async Task AddMarca()
+    {
+        var response = await Http.PostAsJsonAsync("api/marcas", Marca);
+
+        if (response.IsSuccessStatusCode)
+        {
+            NavigationManager.NavigateTo("/marcas");
+        }
+        else
+        {
+            erro = await response.Content.ReadAsStringAsync();
+        }
+    }
+}
