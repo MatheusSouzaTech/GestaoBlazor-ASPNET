@@ -47,6 +47,14 @@ namespace APIGestão.API.Services
             try
             {
                 var marca = await _context.Marcas.FindAsync(id);
+                bool produtosVinculados = await _context.Produtos.AnyAsync(p => p.IDMarca == marca.ID);
+
+                if(produtosVinculados == true)
+                {
+                    Console.WriteLine("Esta marca possui produtos vinculados");
+                    return false;
+                }
+
                 if (marca == null)
                 {
                     Console.WriteLine("Marca não encontrada.");
