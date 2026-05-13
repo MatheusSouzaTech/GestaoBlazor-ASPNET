@@ -1,0 +1,55 @@
+@page "/marcas/create"
+@using ModelsLibrary.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Nova Marca — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Nova Marca</div>
+        <div class="page-subtitle">Cadastre uma nova marca de produto</div>
+    </div>
+    <a href="marcas" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div class="card" style="max-width:480px">
+    <div class="card-body">
+        @if (!string.IsNullOrEmpty(erro))
+        {
+            <div class="alert alert-danger">@erro</div>
+        }
+        <EditForm Model="marca" OnValidSubmit="Salvar">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary-errors" />
+
+            <div class="form-group mb-4">
+                <label class="form-label">Nome da Marca</label>
+                <InputText @bind-Value="marca.Nome" class="form-control" placeholder="Ex: Samsung, Nike..." />
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Salvar Marca</button>
+                <a href="marcas" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private Marcas marca = new();
+    private string erro = string.Empty;
+
+    private async Task Salvar()
+    {
+        erro = string.Empty;
+        var resp = await Http.PostAsJsonAsync("api/marcas", marca);
+        var resultado = await resp.Content.ReadFromJsonAsync<RespostaApi>();
+        if (resp.IsSuccessStatusCode)
+            Nav.NavigateTo("marcas");
+        else
+            erro = resultado?.Mensagem ?? "Erro ao salvar marca.";
+    }
+
+    private record RespostaApi(string Mensagem);
+}

@@ -1,0 +1,86 @@
+@page "/empresas/create"
+@using ModelsLibrary.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Nova Empresa — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Nova Empresa</div>
+        <div class="page-subtitle">Preencha os dados para cadastrar uma nova empresa</div>
+    </div>
+    <a href="empresas" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        @if (!string.IsNullOrEmpty(erro))
+        {
+            <div class="alert alert-danger">@erro</div>
+        }
+        <EditForm Model="empresa" OnValidSubmit="Salvar">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary-errors" />
+
+            <div class="form-section">
+                <div class="form-section-title">Dados da Empresa</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Razão Social</label>
+                        <InputText @bind-Value="empresa.RazaoSocial" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nome Fantasia</label>
+                        <InputText @bind-Value="empresa.NomeFantasia" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CNPJ</label>
+                        <InputText @bind-Value="empresa.CNPJ" class="form-control" placeholder="00.000.000/0000-00" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Regime Tributário</label>
+                        <InputSelect @bind-Value="empresa.RegimeTributario" class="form-select">
+                            <option value="1">Simples Nacional</option>
+                            <option value="2">Lucro Presumido</option>
+                            <option value="3">Lucro Real</option>
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-check mb-4">
+                <InputCheckbox @bind-Value="empresa.Ativo" class="form-check-input" id="ativoCreate" />
+                <label class="form-check-label" for="ativoCreate">Empresa ativa</label>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Salvar Empresa</button>
+                <a href="empresas" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private Empresa empresa = new();
+    private string erro = string.Empty;
+    private string sucesso = string.Empty;
+
+    private async Task Salvar()
+    {
+        erro = string.Empty;
+        sucesso = string.Empty;
+        var resp = await Http.PostAsJsonAsync("api/empresas", empresa);
+        var resultado = await resp.Content.ReadFromJsonAsync<RespostaApi>();
+        if (resp.IsSuccessStatusCode)
+        {
+            sucesso = resultado?.Mensagem ?? "Empresa salva com sucesso.";
+            Nav.NavigateTo("empresas");
+        }
+        else
+            erro = resultado?.Mensagem ?? "Erro ao salvar empresa.";
+    }
+
+    private record RespostaApi(string Mensagem);
+}

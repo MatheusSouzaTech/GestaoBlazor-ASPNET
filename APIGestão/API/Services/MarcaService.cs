@@ -1,4 +1,4 @@
-using APIGestão.API.Models;
+using ModelsLibrary.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace APIGestão.API.Services
@@ -6,92 +6,77 @@ namespace APIGestão.API.Services
     public class MarcaService
     {
         private readonly AppDbContext _context;
+        public MarcaService(AppDbContext context) => _context = context;
 
-        public MarcaService(AppDbContext context)
-        {
-            _context = context;
-        }
+        public async Task<List<Marcas>> ListarMarcas() =>
+            await _context.Marcas.ToListAsync();
 
-        public async Task<List<Marcas>> ListarMarcas()
-        {
-            return await _context.Marcas.ToListAsync();
-        }
+        public async Task<Marcas?> BuscarMarcaId(int id) =>
+            await _context.Marcas.FindAsync(id);
 
-        public async Task<Marcas?> BuscarMarcaId(int id)
-        {
-            return await _context.Marcas.FirstOrDefaultAsync(m => m.ID == id);
-        }
-
-        public async Task<bool> AdicionarMarca(Marcas m)
+        public async Task<(bool sucesso, string mensagem)> AdicionarMarca(Marcas m)
         {
             try
             {
-                var marca = new Marcas
-                {
-                    Nome = m.Nome
-                };
-                _context.Marcas.Add(marca);
+                if (string.IsNullOrWhiteSpace(m.Nome))
+                    return (false, "O nome da marca é obrigatório.");
+
+                _context.Marcas.Add(m);
                 await _context.SaveChangesAsync();
-                Console.WriteLine("Marca cadastrada com sucesso!");
-                return true;
+                return (true, "Marca cadastrada com sucesso.");
+            }
+            catch (DbUpdateException)
+            {
+                return (false, "Erro ao salvar a marca. Verifique os dados informados.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Erro ao cadastrar marca: " + ex);
-                throw;
+                return (false, $"Erro inesperado: {ex.Message}");
             }
         }
 
-        public async Task<bool> ExcluirMarca(int id)
+        public async Task<(bool sucesso, string mensagem)> AtualizarMarca(int id, Marcas m)
+        {
+            try
+            {
+                var atual = await _context.Marcas.FindAsync(id);
+                if (atual == null)
+                    return (false, "Marca não encontrada.");
+
+                if (!string.IsNullOrWhiteSpace(m.Nome)) atual.Nome = m.Nome;
+
+                await _context.SaveChangesAsync();
+                return (true, "Marca atualizada com sucesso.");
+            }
+            catch (DbUpdateException)
+            {
+                return (false, "Erro ao atualizar a marca. Verifique os dados informados.");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Erro inesperado: {ex.Message}");
+            }
+        }
+
+        public async Task<(bool sucesso, string mensagem)> ExcluirMarca(int id)
         {
             try
             {
                 var marca = await _context.Marcas.FindAsync(id);
-                bool produtosVinculados = await _context.Produtos.AnyAsync(p => p.IDMarca == marca.ID);
-
-                if(produtosVinculados == true)
-                {
-                    Console.WriteLine("Esta marca possui produtos vinculados");
-                    return false;
-                }
-
                 if (marca == null)
-                {
-                    Console.WriteLine("Marca não encontrada.");
-                    return false;
-                }
+                    return (false, "Marca não encontrada.");
+
                 _context.Marcas.Remove(marca);
                 await _context.SaveChangesAsync();
-                Console.WriteLine("Marca excluída com sucesso!");
-                return true;
+                return (true, "Marca excluída com sucesso.");
+            }
+            catch (DbUpdateException)
+            {
+                return (false, "Não é possível excluir esta marca pois ela está vinculada a produtos.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Erro ao excluir marca: " + ex);
-                throw;
-            }
-        }
-
-        public async Task<bool> AtualizarMarca(int id, Marcas m)
-        {
-            try
-            {
-                var marca = await _context.Marcas.FindAsync(id);
-                if (marca == null)
-                {
-                    Console.WriteLine("Marca não encontrada.");
-                    return false;
-                }
-                marca.Nome = m.Nome;
-                _context.Marcas.Update(marca);
-                await _context.SaveChangesAsync();
-                Console.WriteLine("Marca atualizada com sucesso!");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Erro ao atualizar marca: " + ex);
-                throw;
+                return (false, $"Erro inesperado: {ex.Message}");
             }
         }
     }

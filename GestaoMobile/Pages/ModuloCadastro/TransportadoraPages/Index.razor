@@ -1,0 +1,70 @@
+@page "/transportadoras"
+@using ModelsLibrary.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Transportadoras — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Transportadoras</div>
+        <div class="page-subtitle">Empresas de logística e transporte</div>
+    </div>
+    <div class="page-actions">
+        <a href="cadastro" class="btn btn-secondary">← Voltar</a>
+        <a href="transportadoras/create" class="btn btn-primary">+ Nova Transportadora</a>
+    </div>
+</div>
+
+<div class="card">
+    @if (transportadoras == null)
+    {
+        <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+    }
+    else if (!transportadoras.Any())
+    {
+        <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            <p>Nenhuma transportadora cadastrada.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrapper">
+            <table class="erp-table">
+                <thead>
+                    <tr><th>#</th><th>Nome</th><th>CNPJ</th><th>Status</th><th>Ações</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in transportadoras)
+                    {
+                        <tr>
+                            <td class="text-muted small">@t.Id</td>
+                            <td><strong>@t.Nome</strong></td>
+                            <td class="small">@t.CNPJ</td>
+                            <td>
+                                @if (t.Ativo)
+                                { <span class="badge badge-success">Ativo</span> }
+                                else
+                                { <span class="badge badge-danger">Inativo</span> }
+                            </td>
+                            <td>
+                                <a href="@($"transportadoras/edit/{t.Id}")" class="btn btn-sm btn-secondary">Editar</a>
+                                <a href="@($"transportadoras/delete/{t.Id}")" class="btn btn-sm btn-danger ms-2">Excluir</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Transportadora>? transportadoras;
+
+    protected override async Task OnInitializedAsync()
+    {
+        transportadoras = await Http.GetFromJsonAsync<List<Transportadora>>("api/transportadoras");
+    }
+}

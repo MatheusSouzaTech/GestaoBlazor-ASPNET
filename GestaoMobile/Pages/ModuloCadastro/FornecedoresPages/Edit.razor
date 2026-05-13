@@ -1,0 +1,90 @@
+@page "/fornecedores/edit/{id:int}"
+@using ModelsLibrary.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Editar Fornecedor — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Editar Fornecedor</div>
+        <div class="page-subtitle">Atualize os dados do fornecedor</div>
+    </div>
+    <a href="fornecedores" class="btn btn-secondary">← Voltar</a>
+</div>
+
+@if (fornecedor == null)
+{
+    <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(erro))
+            {
+                <div class="alert alert-danger">@erro</div>
+            }
+            <EditForm Model="fornecedor" OnValidSubmit="Salvar">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary-errors" />
+
+                <div class="form-section">
+                    <div class="form-section-title">Dados do Fornecedor</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Razão Social</label>
+                            <InputText @bind-Value="fornecedor.RazaoSocial" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CNPJ</label>
+                            <InputText @bind-Value="fornecedor.CNPJ" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">E-mail</label>
+                            <InputText @bind-Value="fornecedor.Email" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefone</label>
+                            <InputText @bind-Value="fornecedor.Telefone" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-check mb-4">
+                    <InputCheckbox @bind-Value="fornecedor.Ativo" class="form-check-input" id="ativoEdit" />
+                    <label class="form-check-label" for="ativoEdit">Fornecedor ativo</label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    <a href="fornecedores" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Fornecedor? fornecedor;
+    private string erro = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        fornecedor = await Http.GetFromJsonAsync<Fornecedor>($"api/fornecedores/{Id}");
+    }
+
+    private async Task Salvar()
+    {
+        erro = string.Empty;
+        var resp = await Http.PutAsJsonAsync($"api/fornecedores/{Id}", fornecedor);
+        var resultado = await resp.Content.ReadFromJsonAsync<RespostaApi>();
+        if (resp.IsSuccessStatusCode)
+            Nav.NavigateTo("fornecedores");
+        else
+            erro = resultado?.Mensagem ?? "Erro ao atualizar fornecedor.";
+    }
+
+    private record RespostaApi(string Mensagem);
+}

@@ -1,57 +1,45 @@
-using APIGestão.API.Models;
+using ModelsLibrary.Models;
 using APIGestão.API.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APIGestão.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/produtos")]
     public class ProdutosController : ControllerBase
     {
         private readonly ProdutoService _service;
-
-        public ProdutosController(ProdutoService service)
-        {
-            _service = service;
-        }
+        public ProdutosController(ProdutoService service) => _service = service;
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            var produtos = await _service.ListarProdutos();
-            return Ok(produtos);
-        }
+        public async Task<IActionResult> GetAll() => Ok(await _service.ListarProdutos());
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var produto = await _service.BuscarProdutoId(id);
-            if (produto == null) return NotFound();
-            return Ok(produto);
+            var p = await _service.BuscarProdutoId(id);
+            return p == null ? NotFound() : Ok(p);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Produtos produto)
+        public async Task<IActionResult> Create([FromBody] Produto p)
         {
-            var resultado = await _service.AdicionarProdutos(produto);
-            if (!resultado) return BadRequest();
-            return Created(string.Empty, produto);
+            var (sucesso, mensagem) = await _service.AdicionarProdutos(p);
+            return sucesso ? Ok(new { mensagem }) : BadRequest(new { mensagem });
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Produtos produto)
+        public async Task<IActionResult> Update(int id, [FromBody] Produto p)
         {
-            var resultado = await _service.UpdateProdutos(id, produto);
-            if (!resultado) return NotFound();
-            return NoContent();
+            var (sucesso, mensagem) = await _service.UpdateProdutos(id, p);
+            return sucesso ? Ok(new { mensagem }) : BadRequest(new { mensagem });
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var resultado = await _service.ExcluirProdutos(id);
-            if (!resultado) return NotFound();
-            return NoContent();
+            var (sucesso, mensagem) = await _service.ExcluirProdutos(id);
+            return sucesso ? Ok(new { mensagem }) : BadRequest(new { mensagem });
         }
     }
 }

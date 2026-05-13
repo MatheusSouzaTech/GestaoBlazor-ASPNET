@@ -1,0 +1,100 @@
+@page "/produtos/edit/{id:int}"
+@using ModelsLibrary.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Editar Produto — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Editar Produto</div>
+        <div class="page-subtitle">Atualize os dados do produto</div>
+    </div>
+    <a href="produtos" class="btn btn-secondary">← Voltar</a>
+</div>
+
+@if (produto == null)
+{
+    <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(erro))
+            {
+                <div class="alert alert-danger">@erro</div>
+            }
+            <EditForm Model="produto" OnValidSubmit="Salvar">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary-errors" />
+
+                <div class="form-section">
+                    <div class="form-section-title">Identificação</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nome</label>
+                            <InputText @bind-Value="produto.Nome" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">SKU</label>
+                            <InputText @bind-Value="produto.SKU" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Código de Barras</label>
+                            <InputText @bind-Value="produto.CodigoBarras" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">Valores</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Preço de Venda (R$)</label>
+                            <InputNumber @bind-Value="produto.PrecoVenda" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Custo (R$)</label>
+                            <InputNumber @bind-Value="produto.Custo" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-check mb-4">
+                    <InputCheckbox @bind-Value="produto.Ativo" class="form-check-input" id="ativoEdit" />
+                    <label class="form-check-label" for="ativoEdit">Produto ativo</label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    <a href="produtos" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Produto? produto;
+    private string erro = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        produto = await Http.GetFromJsonAsync<Produto>($"api/produtos/{Id}");
+    }
+
+    private async Task Salvar()
+    {
+        erro = string.Empty;
+        var resp = await Http.PutAsJsonAsync($"api/produtos/{Id}", produto);
+        var resultado = await resp.Content.ReadFromJsonAsync<RespostaApi>();
+        if (resp.IsSuccessStatusCode)
+            Nav.NavigateTo("produtos");
+        else
+            erro = resultado?.Mensagem ?? "Erro ao atualizar produto.";
+    }
+
+    private record RespostaApi(string Mensagem);
+}

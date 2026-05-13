@@ -1,4 +1,4 @@
-﻿using APIGestão.API.Models;
+﻿using ModelsLibrary.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace APIGestão.API.Services
@@ -6,92 +6,81 @@ namespace APIGestão.API.Services
     public class FornecedorService
     {
         private readonly AppDbContext _context;
+        public FornecedorService(AppDbContext context) => _context = context;
 
-        public FornecedorService(AppDbContext context)
-        {
-            _context = context;
-        }
-        public async Task<List<Fornecedores>> ListarFornecedores()
-        {
-            return await _context.Fornecedores.ToListAsync();
-        }
+        public async Task<List<Fornecedor>> ListarFornecedores() =>
+            await _context.Fornecedores.ToListAsync();
 
-        public async Task<Fornecedores> BuscarFornecedorId(int id)
-        {
-            var busca = await _context.Fornecedores.FirstOrDefaultAsync(f => f.ID == id);
-            return busca;
-        }
+        public async Task<Fornecedor?> BuscarFornecedorId(int id) =>
+            await _context.Fornecedores.Include(f => f.Enderecos).FirstOrDefaultAsync(f => f.Id == id);
 
-        public async Task<bool> AdicionarFornecedor(Fornecedores f)
+        public async Task<(bool sucesso, string mensagem)> AdicionarFornecedor(Fornecedor fornecedor)
         {
             try
             {
-                var fornecedor = new Fornecedores
-                {
-                    Nome = f.Nome,
-                    CNPJ = f.CNPJ,
-                    Endereco = f.Endereco,
-                    Telefone = f.Telefone,
-                    Status = f.Status,
-                    DataCadastro = f.DataCadastro
-                };
+                if (string.IsNullOrWhiteSpace(fornecedor.RazaoSocial))
+                    return (false, "A Razão Social do fornecedor é obrigatória.");
+
                 _context.Fornecedores.Add(fornecedor);
                 await _context.SaveChangesAsync();
-                Console.WriteLine("Fornecedor Cadastrado com sucesso!");
-                return true;
+                return (true, "Fornecedor cadastrado com sucesso.");
+            }
+            catch (DbUpdateException)
+            {
+                return (false, "Erro ao salvar o fornecedor. Verifique se o CNPJ já está cadastrado.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Erro ao cadastrar fornecedor" + ex);
-                throw;
+                return (false, $"Erro inesperado: {ex.Message}");
             }
         }
-        public async Task<bool> ExcluirFornecedor(int id)
+
+        public async Task<(bool sucesso, string mensagem)> AtualizarFornecedor(int id, Fornecedor fornecedor)
+        {
+            try
+            {
+                var atual = await _context.Fornecedores.FindAsync(id);
+                if (atual == null)
+                    return (false, "Fornecedor não encontrado.");
+
+                if (!string.IsNullOrWhiteSpace(fornecedor.RazaoSocial)) atual.RazaoSocial = fornecedor.RazaoSocial;
+                if (!string.IsNullOrWhiteSpace(fornecedor.CNPJ)) atual.CNPJ = fornecedor.CNPJ;
+                if (!string.IsNullOrWhiteSpace(fornecedor.Email)) atual.Email = fornecedor.Email;
+                if (!string.IsNullOrWhiteSpace(fornecedor.Telefone)) atual.Telefone = fornecedor.Telefone;
+                atual.Ativo = fornecedor.Ativo;
+
+                await _context.SaveChangesAsync();
+                return (true, "Fornecedor atualizado com sucesso.");
+            }
+            catch (DbUpdateException)
+            {
+                return (false, "Erro ao atualizar o fornecedor. Verifique os dados informados.");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Erro inesperado: {ex.Message}");
+            }
+        }
+
+        public async Task<(bool sucesso, string mensagem)> ExcluirFornecedor(int id)
         {
             try
             {
                 var fornecedor = await _context.Fornecedores.FindAsync(id);
                 if (fornecedor == null)
-                {
-                    Console.WriteLine("Fornecedor não encontrado.");
-                    return false;
-                }
+                    return (false, "Fornecedor não encontrado.");
+
                 _context.Fornecedores.Remove(fornecedor);
                 await _context.SaveChangesAsync();
-                Console.WriteLine("Fornecedor excluído com sucesso!");
-                return true;
+                return (true, "Fornecedor excluído com sucesso.");
+            }
+            catch (DbUpdateException)
+            {
+                return (false, "Não é possível excluir este fornecedor pois ele possui registros vinculados.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Erro ao excluir fornecedor: " + ex);
-                throw;
-            }
-        }
-        public async Task<bool> AtualizarFornecedor(int id, Fornecedores f)
-        {
-            try
-            {
-                var fornecedor = await _context.Fornecedores.FindAsync(id);
-                if (fornecedor == null)
-                {
-                    Console.WriteLine("Fornecedor não encontrado.");
-                    return false;
-                }
-                fornecedor.Nome = f.Nome;
-                fornecedor.CNPJ = f.CNPJ;
-                fornecedor.Endereco = f.Endereco;
-                fornecedor.Telefone = f.Telefone;
-                fornecedor.Status = f.Status;
-                fornecedor.DataCadastro = f.DataCadastro;
-                _context.Fornecedores.Update(fornecedor);
-                await _context.SaveChangesAsync();
-                Console.WriteLine("Fornecedor atualizado com sucesso!");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Erro ao atualizar fornecedor: " + ex);
-                throw;
+                return (false, $"Erro inesperado: {ex.Message}");
             }
         }
     }

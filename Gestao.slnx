@@ -1,5 +1,5 @@
 <Solution>
-  <Folder Name="/Solution Items/" />
   <Project Path="APIGestão/APIGestão.csproj" />
-  <Project Path="Gestao/Gestao.csproj" />
+  <Project Path="GestaoMobile/GestaoMobile.csproj" />
+  <Project Path="ModelsLibrary/ModelsLibrary.csproj" Id="d3e44399-a546-4516-a45a-f51127094cda" />
 </Solution>

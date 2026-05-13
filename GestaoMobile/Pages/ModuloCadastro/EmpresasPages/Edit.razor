@@ -1,0 +1,94 @@
+@page "/empresas/edit/{id:int}"
+@using ModelsLibrary.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Editar Empresa — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Editar Empresa</div>
+        <div class="page-subtitle">Atualize os dados da empresa</div>
+    </div>
+    <a href="empresas" class="btn btn-secondary">← Voltar</a>
+</div>
+
+@if (empresa == null)
+{
+    <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(erro))
+            {
+                <div class="alert alert-danger">@erro</div>
+            }
+            <EditForm Model="empresa" OnValidSubmit="Salvar">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary-errors" />
+
+                <div class="form-section">
+                    <div class="form-section-title">Dados da Empresa</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Razão Social</label>
+                            <InputText @bind-Value="empresa.RazaoSocial" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nome Fantasia</label>
+                            <InputText @bind-Value="empresa.NomeFantasia" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CNPJ</label>
+                            <InputText @bind-Value="empresa.CNPJ" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Regime Tributário</label>
+                            <InputSelect @bind-Value="empresa.RegimeTributario" class="form-select">
+                                <option value="1">Simples Nacional</option>
+                                <option value="2">Lucro Presumido</option>
+                                <option value="3">Lucro Real</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-check mb-4">
+                    <InputCheckbox @bind-Value="empresa.Ativo" class="form-check-input" id="ativoEdit" />
+                    <label class="form-check-label" for="ativoEdit">Empresa ativa</label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    <a href="empresas" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Empresa? empresa;
+    private string erro = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        empresa = await Http.GetFromJsonAsync<Empresa>($"api/empresas/{Id}");
+    }
+
+    private async Task Salvar()
+    {
+        erro = string.Empty;
+        var resp = await Http.PutAsJsonAsync($"api/empresas/{Id}", empresa);
+        var resultado = await resp.Content.ReadFromJsonAsync<RespostaApi>();
+        if (resp.IsSuccessStatusCode)
+            Nav.NavigateTo("empresas");
+        else
+            erro = resultado?.Mensagem ?? "Erro ao atualizar empresa.";
+    }
+
+    private record RespostaApi(string Mensagem);
+}

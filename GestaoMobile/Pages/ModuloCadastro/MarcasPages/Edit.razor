@@ -1,0 +1,68 @@
+@page "/marcas/edit/{id:int}"
+@using ModelsLibrary.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Editar Marca — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Editar Marca</div>
+        <div class="page-subtitle">Atualize o nome da marca</div>
+    </div>
+    <a href="marcas" class="btn btn-secondary">← Voltar</a>
+</div>
+
+@if (marca == null)
+{
+    <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+}
+else
+{
+    <div class="card" style="max-width:480px">
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(erro))
+            {
+                <div class="alert alert-danger">@erro</div>
+            }
+            <EditForm Model="marca" OnValidSubmit="Salvar">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary-errors" />
+
+                <div class="form-group mb-4">
+                    <label class="form-label">Nome da Marca</label>
+                    <InputText @bind-Value="marca.Nome" class="form-control" />
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    <a href="marcas" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Marcas? marca;
+    private string erro = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        marca = await Http.GetFromJsonAsync<Marcas>($"api/marcas/{Id}");
+    }
+
+    private async Task Salvar()
+    {
+        erro = string.Empty;
+        var resp = await Http.PutAsJsonAsync($"api/marcas/{Id}", marca);
+        var resultado = await resp.Content.ReadFromJsonAsync<RespostaApi>();
+        if (resp.IsSuccessStatusCode)
+            Nav.NavigateTo("marcas");
+        else
+            erro = resultado?.Mensagem ?? "Erro ao atualizar marca.";
+    }
+
+    private record RespostaApi(string Mensagem);
+}

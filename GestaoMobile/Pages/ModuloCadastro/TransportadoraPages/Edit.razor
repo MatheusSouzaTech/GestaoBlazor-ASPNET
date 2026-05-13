@@ -1,0 +1,94 @@
+@page "/transportadoras/edit/{id:int}"
+@using ModelsLibrary.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Editar Transportadora — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Editar Transportadora</div>
+        <div class="page-subtitle">Atualize os dados da transportadora</div>
+    </div>
+    <a href="transportadoras" class="btn btn-secondary">← Voltar</a>
+</div>
+
+@if (transportadora == null)
+{
+    <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(erro))
+            {
+                <div class="alert alert-danger">@erro</div>
+            }
+            <EditForm Model="transportadora" OnValidSubmit="Salvar">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary-errors" />
+
+                <div class="form-section">
+                    <div class="form-section-title">Dados da Transportadora</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nome</label>
+                            <InputText @bind-Value="transportadora.Nome" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CNPJ</label>
+                            <InputText @bind-Value="transportadora.CNPJ" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefone</label>
+                            <InputText @bind-Value="transportadora.Telefone" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tipo</label>
+                            <InputSelect @bind-Value="transportadora.Tipo" class="form-select">
+                                <option value="1">Rodoviário</option>
+                                <option value="2">Aéreo</option>
+                                <option value="3">Marítimo</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-check mb-4">
+                    <InputCheckbox @bind-Value="transportadora.Ativo" class="form-check-input" id="ativoEdit" />
+                    <label class="form-check-label" for="ativoEdit">Transportadora ativa</label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    <a href="transportadoras" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Transportadora? transportadora;
+    private string erro = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        transportadora = await Http.GetFromJsonAsync<Transportadora>($"api/transportadoras/{Id}");
+    }
+
+    private async Task Salvar()
+    {
+        erro = string.Empty;
+        var resp = await Http.PutAsJsonAsync($"api/transportadoras/{Id}", transportadora);
+        var resultado = await resp.Content.ReadFromJsonAsync<RespostaApi>();
+        if (resp.IsSuccessStatusCode)
+            Nav.NavigateTo("transportadoras");
+        else
+            erro = resultado?.Mensagem ?? "Erro ao atualizar transportadora.";
+    }
+
+    private record RespostaApi(string Mensagem);
+}

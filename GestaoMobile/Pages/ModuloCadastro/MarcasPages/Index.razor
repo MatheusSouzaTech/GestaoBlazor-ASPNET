@@ -1,0 +1,63 @@
+@page "/marcas"
+@using ModelsLibrary.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Marcas — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Marcas</div>
+        <div class="page-subtitle">Catálogo de marcas de produtos</div>
+    </div>
+    <div class="page-actions">
+        <a href="cadastro" class="btn btn-secondary">? Voltar</a>
+        <a href="marcas/create" class="btn btn-primary">+ Nova Marca</a>
+    </div>
+</div>
+
+<div class="card">
+    @if (marcas == null)
+    {
+        <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+    }
+    else if (!marcas.Any())
+    {
+        <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/></svg>
+            <p>Nenhuma marca cadastrada.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrapper">
+            <table class="erp-table">
+                <thead>
+                    <tr><th>#</th><th>Nome</th><th>Ações</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in marcas)
+                    {
+                        <tr>
+                            <td class="text-muted small">@m.Id</td>
+                            <td><strong>@m.Nome</strong></td>
+                            <td>
+                                <a href="@($"marcas/edit/{m.Id}")" class="btn btn-sm btn-secondary">Editar</a>
+                                <a href="@($"marcas/delete/{m.Id}")" class="btn btn-sm btn-danger ms-2">Excluir</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Marcas>? marcas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        marcas = await Http.GetFromJsonAsync<List<Marcas>>("api/marcas");
+    }
+}

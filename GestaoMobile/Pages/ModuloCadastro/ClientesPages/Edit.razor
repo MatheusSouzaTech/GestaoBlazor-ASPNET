@@ -1,0 +1,103 @@
+@page "/clientes/edit/{id:int}"
+@using ModelsLibrary.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Editar Cliente — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Editar Cliente</div>
+        <div class="page-subtitle">Atualize os dados do cliente</div>
+    </div>
+    <a href="clientes" class="btn btn-secondary">← Voltar</a>
+</div>
+
+@if (cliente == null)
+{
+    <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(erro))
+            {
+                <div class="alert alert-danger">@erro</div>
+            }
+            <EditForm Model="cliente" OnValidSubmit="Salvar">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary-errors" />
+
+                <div class="form-section">
+                    <div class="form-section-title">Dados Pessoais</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nome</label>
+                            <InputText @bind-Value="cliente.Nome" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Tipo de Pessoa</label>
+                            <InputSelect @bind-Value="cliente.TipoPessoa" class="form-select">
+                                <option value="1">Física</option>
+                                <option value="2">Jurídica</option>
+                            </InputSelect>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CPF / CNPJ</label>
+                            <InputText @bind-Value="cliente.CPF_CNPJ" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">Contato</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">E-mail</label>
+                            <InputText @bind-Value="cliente.Email" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefone</label>
+                            <InputText @bind-Value="cliente.Telefone" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-check mb-4">
+                    <InputCheckbox @bind-Value="cliente.Ativo" class="form-check-input" id="ativoEdit" />
+                    <label class="form-check-label" for="ativoEdit">Cliente ativo</label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    <a href="clientes" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Cliente? cliente;
+    private string erro = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cliente = await Http.GetFromJsonAsync<Cliente>($"api/clientes/{Id}");
+    }
+
+    private async Task Salvar()
+    {
+        erro = string.Empty;
+        var resp = await Http.PutAsJsonAsync($"api/clientes/{Id}", cliente);
+        var resultado = await resp.Content.ReadFromJsonAsync<RespostaApi>();
+        if (resp.IsSuccessStatusCode)
+            Nav.NavigateTo("clientes");
+        else
+            erro = resultado?.Mensagem ?? "Erro ao atualizar cliente.";
+    }
+
+    private record RespostaApi(string Mensagem);
+}

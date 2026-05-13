@@ -1,0 +1,78 @@
+@page "/empresas"
+@using ModelsLibrary.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Empresas — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Empresas</div>
+        <div class="page-subtitle">Gerenciamento de empresas cadastradas</div>
+    </div>
+    <div class="page-actions">
+        <a href="cadastro" class="btn btn-secondary">← Voltar</a>
+        <a href="empresas/create" class="btn btn-primary">+ Nova Empresa</a>
+    </div>
+</div>
+
+<div class="card">
+    @if (empresas == null)
+    {
+        <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+    }
+    else if (!empresas.Any())
+    {
+        <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M9 21v-5h6v5"/>
+            </svg>
+            <p>Nenhuma empresa cadastrada.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrapper">
+            <table class="erp-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Razão Social</th>
+                        <th>CNPJ</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in empresas)
+                    {
+                        <tr>
+                            <td class="text-muted small">@e.Id</td>
+                            <td><strong>@e.RazaoSocial</strong></td>
+                            <td class="small">@e.CNPJ</td>
+                            <td>
+                                @if (e.Ativo)
+                                { <span class="badge badge-success">Ativo</span> }
+                                else
+                                { <span class="badge badge-danger">Inativo</span> }
+                            </td>
+                            <td>
+                                <a href="@($"empresas/edit/{e.Id}")" class="btn btn-sm btn-secondary">Editar</a>
+                                <a href="@($"empresas/delete/{e.Id}")" class="btn btn-sm btn-danger ms-2">Excluir</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Empresa>? empresas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        empresas = await Http.GetFromJsonAsync<List<Empresa>>("api/empresas");
+    }
+}

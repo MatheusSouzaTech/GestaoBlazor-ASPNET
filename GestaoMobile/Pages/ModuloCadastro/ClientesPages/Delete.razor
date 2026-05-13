@@ -1,0 +1,61 @@
+@page "/clientes/delete/{id:int}"
+@using ModelsLibrary.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Excluir Cliente — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Excluir Cliente</div>
+        <div class="page-subtitle">Esta ação não pode ser desfeita</div>
+    </div>
+    <a href="clientes" class="btn btn-secondary">← Voltar</a>
+</div>
+
+@if (cliente == null)
+{
+    <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+}
+else
+{
+    <div class="card" style="max-width:520px">
+        <div class="card-body">
+            <div class="alert alert-warning">
+                Você está prestes a excluir permanentemente o cliente <strong>@cliente.Nome</strong>. Deseja continuar?
+            </div>
+            @if (!string.IsNullOrEmpty(erro))
+            {
+                <div class="alert alert-danger">@erro</div>
+            }
+            <div class="d-flex gap-2">
+                <button class="btn btn-danger" @onclick="Excluir">Confirmar Exclusão</button>
+                <a href="clientes" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Cliente? cliente;
+    private string erro = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        cliente = await Http.GetFromJsonAsync<Cliente>($"api/clientes/{Id}");
+    }
+
+    private async Task Excluir()
+    {
+        erro = string.Empty;
+        var resp = await Http.DeleteAsync($"api/clientes/{Id}");
+        var resultado = await resp.Content.ReadFromJsonAsync<RespostaApi>();
+        if (resp.IsSuccessStatusCode)
+            Nav.NavigateTo("clientes");
+        else
+            erro = resultado?.Mensagem ?? "Erro ao excluir cliente.";
+    }
+
+    private record RespostaApi(string Mensagem);
+}

@@ -1,4 +1,4 @@
-﻿using APIGestão.API.Models;
+﻿using ModelsLibrary.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace APIGestão.API.Services
@@ -6,96 +6,81 @@ namespace APIGestão.API.Services
     public class TransportadoraService
     {
         private readonly AppDbContext _context;
+        public TransportadoraService(AppDbContext context) => _context = context;
 
-        public TransportadoraService(AppDbContext context)
-        {
-            _context = context;
-        }
+        public async Task<List<Transportadora>> ListarTransportadoras() =>
+            await _context.Transportadoras.ToListAsync();
 
-        public async Task<List<Transportadora>> ListarTransportadoras()
-        {
-            return await _context.Transportadoras.ToListAsync();
-        }
+        public async Task<Transportadora?> BuscarTransportadoraId(int id) =>
+            await _context.Transportadoras.FindAsync(id);
 
-        public async Task<Transportadora> BuscarTransportadoraId(int id)
-        {
-            var busca = await _context.Transportadoras.FirstOrDefaultAsync(t => t.ID == id);
-            return busca;
-        }
-
-        public async Task<bool> AdicionarTransportadora(Transportadora t)
+        public async Task<(bool sucesso, string mensagem)> AdicionarTransportadora(Transportadora t)
         {
             try
             {
-                var transportadora = new Transportadora
-                {
-                    RazaoSocial = t.RazaoSocial,
-                    NomeFantasia = t.NomeFantasia,
-                    Telefone = t.Telefone,
-                    Email = t.Email,
-                    TipoTransporte = t.TipoTransporte,
-                    PrazoEntrega = t.PrazoEntrega,
-                    Status = t.Status
-                };
-                _context.Transportadoras.Add(transportadora);
+                if (string.IsNullOrWhiteSpace(t.Nome))
+                    return (false, "O nome da transportadora é obrigatório.");
+
+                _context.Transportadoras.Add(t);
                 await _context.SaveChangesAsync();
-                Console.WriteLine("Transportadora Cadastrada com sucesso!");
-                return true;
+                return (true, "Transportadora cadastrada com sucesso.");
+            }
+            catch (DbUpdateException)
+            {
+                return (false, "Erro ao salvar a transportadora. Verifique os dados informados.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Erro ao cadastrar transportadora" + ex);
-                throw;
+                return (false, $"Erro inesperado: {ex.Message}");
             }
         }
-         public async Task<bool> ExcluirTransportadora(int id)
-        {
-            try
-            {
-                var transportadora = await _context.Transportadoras.FindAsync(id);
-                if (transportadora == null)
-                {
-                    Console.WriteLine("Transportadora não encontrada.");
-                    return false;
-                }
-                _context.Transportadoras.Remove(transportadora);
-                await _context.SaveChangesAsync();
-                Console.WriteLine("Transportadora excluída com sucesso!");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Erro ao excluir transportadora" + ex);
-                throw;
-            }
-         }
 
-        public async Task<bool> AtualizarTransportadora(int id, Transportadora t)
+        public async Task<(bool sucesso, string mensagem)> AtualizarTransportadora(int id, Transportadora t)
         {
             try
             {
-                var transportadora = await _context.Transportadoras.FindAsync(id);
-                if (transportadora == null)
-                {
-                    Console.WriteLine("Transportadora não encontrada.");
-                    return false;
-                }
-                transportadora.RazaoSocial = t.RazaoSocial;
-                transportadora.NomeFantasia = t.NomeFantasia;
-                transportadora.Telefone = t.Telefone;
-                transportadora.Email = t.Email;
-                transportadora.TipoTransporte = t.TipoTransporte;
-                transportadora.PrazoEntrega = t.PrazoEntrega;
-                transportadora.Status = t.Status;
-                _context.Transportadoras.Update(transportadora);
+                var atual = await _context.Transportadoras.FindAsync(id);
+                if (atual == null)
+                    return (false, "Transportadora não encontrada.");
+
+                if (!string.IsNullOrWhiteSpace(t.Nome)) atual.Nome = t.Nome;
+                if (!string.IsNullOrWhiteSpace(t.CNPJ)) atual.CNPJ = t.CNPJ;
+                if (!string.IsNullOrWhiteSpace(t.Telefone)) atual.Telefone = t.Telefone;
+                if (t.Tipo > 0) atual.Tipo = t.Tipo;
+                atual.Ativo = t.Ativo;
+
                 await _context.SaveChangesAsync();
-                Console.WriteLine("Transportadora atualizada com sucesso!");
-                return true;
+                return (true, "Transportadora atualizada com sucesso.");
+            }
+            catch (DbUpdateException)
+            {
+                return (false, "Erro ao atualizar a transportadora. Verifique os dados informados.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Erro ao atualizar transportadora" + ex);
-                throw;
+                return (false, $"Erro inesperado: {ex.Message}");
+            }
+        }
+
+        public async Task<(bool sucesso, string mensagem)> ExcluirTransportadora(int id)
+        {
+            try
+            {
+                var t = await _context.Transportadoras.FindAsync(id);
+                if (t == null)
+                    return (false, "Transportadora não encontrada.");
+
+                _context.Transportadoras.Remove(t);
+                await _context.SaveChangesAsync();
+                return (true, "Transportadora excluída com sucesso.");
+            }
+            catch (DbUpdateException)
+            {
+                return (false, "Não é possível excluir esta transportadora pois ela possui registros vinculados.");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Erro inesperado: {ex.Message}");
             }
         }
     }
