@@ -1,6 +1,21 @@
-﻿<Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+﻿@using GestaoMobile.Components
+@using GestaoMobile.Layout
+
+<Router AppAssembly="@typeof(App).Assembly" NotFoundPage="typeof(Pages.NotFound)">
     <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
+        @{
+            var isPublic = routeData.PageType == typeof(Pages.Login);
+        }
+        @if (isPublic)
+        {
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(AuthLayout)" />
+        }
+        else
+        {
+            <AuthGuard>
+                <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            </AuthGuard>
+        }
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
 </Router>

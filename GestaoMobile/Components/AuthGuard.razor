@@ -1,0 +1,44 @@
+@inject AuthService Auth
+@inject NavigationManager Nav
+@implements IDisposable
+
+@if (_verificado && _autenticado)
+{
+    @ChildContent
+}
+else if (_verificado && !_autenticado)
+{
+    <div class="auth-redirect">
+        <div class="spinner-border" role="status"></div>
+        <span>Redirecionando para o login...</span>
+    </div>
+}
+else
+{
+    <div class="auth-redirect">
+        <div class="spinner-border" role="status"></div>
+        <span>Verificando autenticação...</span>
+    </div>
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool _verificado  = false;
+    private bool _autenticado = false;
+    private bool _disposed    = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _autenticado = await Auth.EstaLogadoAsync();
+        _verificado  = true;
+
+        if (!_autenticado && !_disposed)
+        {
+            var retorno = Uri.EscapeDataString(Nav.Uri);
+            Nav.NavigateTo($"/login?retorno={retorno}", replace: true);
+        }
+    }
+
+    public void Dispose() => _disposed = true;
+}

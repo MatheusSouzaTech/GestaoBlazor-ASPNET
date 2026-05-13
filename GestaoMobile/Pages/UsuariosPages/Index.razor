@@ -1,0 +1,95 @@
+@page "/usuarios"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject AuthService Auth
+
+<PageTitle>Usuários — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Usuários</div>
+        <div class="page-subtitle">Gerenciamento de usuários do sistema</div>
+    </div>
+    <div class="page-actions">
+        <a href="usuarios/create" class="btn btn-primary">+ Novo Usuário</a>
+    </div>
+</div>
+
+<div class="card">
+    @if (usuarios == null)
+    {
+        <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+    }
+    else if (!usuarios.Any())
+    {
+        <div class="empty-state">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            </svg>
+            <p>Nenhum usuário cadastrado.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrapper">
+            <table class="erp-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Nome</th>
+                        <th>Login</th>
+                        <th>E-mail</th>
+                        <th>Último Login</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in usuarios)
+                    {
+                        <tr>
+                            <td class="text-muted small">@u.Id</td>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:.5rem">
+                                    <div class="user-avatar" style="width:30px;height:30px;font-size:.75rem;flex-shrink:0">
+                                        @u.Nome[0].ToString().ToUpper()
+                                    </div>
+                                    <strong>@u.Nome</strong>
+                                </div>
+                            </td>
+                            <td class="small">@u.Login</td>
+                            <td class="small">@u.Email</td>
+                            <td class="small text-muted">
+                                @(u.UltimoLogin.HasValue ? u.UltimoLogin.Value.ToString("dd/MM/yyyy HH:mm") : "—")
+                            </td>
+                            <td>
+                                @if (u.Ativo)
+                                { <span class="badge badge-success">Ativo</span> }
+                                else
+                                { <span class="badge badge-danger">Inativo</span> }
+                            </td>
+                            <td>
+                                <a href="@($"usuarios/edit/{u.Id}")" class="btn btn-sm btn-secondary">Editar</a>
+                                <a href="@($"usuarios/delete/{u.Id}")" class="btn btn-sm btn-danger ms-2">Excluir</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Usuario>? usuarios;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await Auth.EstaLogadoAsync())
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+        usuarios = await Http.GetFromJsonAsync<List<Usuario>>("api/usuarios");
+    }
+}

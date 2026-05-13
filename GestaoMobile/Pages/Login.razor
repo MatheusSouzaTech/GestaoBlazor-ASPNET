@@ -1,0 +1,98 @@
+@page "/login"
+@layout AuthLayout
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<PageTitle>Login — GestãoPro</PageTitle>
+
+<div class="auth-card">
+    <div class="auth-logo">
+        <div class="auth-logo-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+            </svg>
+        </div>
+        <h1>GestãoPro</h1>
+        <p>Sistema de Gestão Empresarial</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(erro))
+    {
+        <div class="auth-alert-error">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            @erro
+        </div>
+    }
+
+    <EditForm Model="request" OnValidSubmit="Entrar" class="auth-form">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label class="form-label">Login</label>
+            <InputText @bind-Value="request.Login" class="form-control"
+                       placeholder="Seu login de acesso" autocomplete="username" />
+            <ValidationMessage For="@(() => request.Login)" class="text-danger small" />
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">Senha</label>
+            <InputText @bind-Value="request.Senha" class="form-control" type="password"
+                       placeholder="••••••••" autocomplete="current-password" />
+            <ValidationMessage For="@(() => request.Senha)" class="text-danger small" />
+        </div>
+
+        <button type="submit" class="auth-submit" disabled="@carregando">
+            @if (carregando)
+            {
+                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                <span>Entrando...</span>
+            }
+            else
+            {
+                <span>Entrar no sistema</span>
+            }
+        </button>
+    </EditForm>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "retorno")]
+    private string? Retorno { get; set; }
+
+    private LoginRequest request  = new();
+    private string       erro     = string.Empty;
+    private bool         carregando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await Auth.EstaLogadoAsync())
+            Nav.NavigateTo(ResolverRetorno(), replace: true);
+    }
+
+    private async Task Entrar()
+    {
+        erro       = string.Empty;
+        carregando = true;
+        var (sucesso, mensagem) = await Auth.LoginAsync(request);
+        carregando = false;
+
+        if (sucesso)
+            Nav.NavigateTo(ResolverRetorno(), replace: true);
+        else
+            erro = mensagem;
+    }
+
+    private string ResolverRetorno()
+    {
+        if (!string.IsNullOrWhiteSpace(Retorno))
+        {
+            var uri = Uri.UnescapeDataString(Retorno);
+            if (uri.StartsWith("/") && !uri.StartsWith("//"))
+                return uri;
+        }
+        return "/";
+    }
+}
+

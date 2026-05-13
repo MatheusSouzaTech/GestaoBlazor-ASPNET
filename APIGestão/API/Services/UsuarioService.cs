@@ -100,5 +100,15 @@ namespace APIGestão.API.Services
                 return (false, $"Erro inesperado: {ex.Message}");
             }
         }
+
+        public async Task RegistrarUltimoLogin(int id)
+        {
+            var u = await _context.Usuarios.FindAsync(id);
+            if (u != null)
+            {
+                u.UltimoLogin = DateTime.Now;
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

@@ -1,0 +1,73 @@
+@page "/usuarios/delete/{id:int}"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject AuthService Auth
+
+<PageTitle>Excluir Usuário — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Excluir Usuário</div>
+        <div class="page-subtitle">Esta ação não pode ser desfeita</div>
+    </div>
+    <a href="usuarios" class="btn btn-secondary">← Voltar</a>
+</div>
+
+@if (usuario == null)
+{
+    <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+}
+else
+{
+    <div class="card" style="max-width:520px">
+        <div class="card-body">
+            <div class="alert alert-warning">
+                Você está prestes a excluir permanentemente o usuário <strong>@usuario.Nome</strong>
+                (login: <strong>@usuario.Login</strong>). Deseja continuar?
+            </div>
+            @if (!string.IsNullOrEmpty(erro))
+            {
+                <div class="alert alert-danger">@erro</div>
+            }
+            <div class="d-flex gap-2">
+                <button class="btn btn-danger" @onclick="Excluir" disabled="@carregando">
+                    @(carregando ? "Excluindo..." : "Confirmar Exclusão")
+                </button>
+                <a href="usuarios" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Usuario? usuario;
+    private string erro = string.Empty;
+    private bool carregando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await Auth.EstaLogadoAsync())
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+        usuario = await Http.GetFromJsonAsync<Usuario>($"api/usuarios/{Id}");
+    }
+
+    private async Task Excluir()
+    {
+        erro = string.Empty;
+        carregando = true;
+        var resp = await Http.DeleteAsync($"api/usuarios/{Id}");
+        var resultado = await resp.Content.ReadFromJsonAsync<RespostaApi>();
+        carregando = false;
+
+        if (resp.IsSuccessStatusCode)
+            Nav.NavigateTo("usuarios");
+        else
+            erro = resultado?.Mensagem ?? "Erro ao excluir usuário.";
+    }
+
+    private record RespostaApi(string Mensagem);
+}

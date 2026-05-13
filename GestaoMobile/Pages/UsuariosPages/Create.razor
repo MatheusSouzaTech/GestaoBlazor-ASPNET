@@ -1,0 +1,109 @@
+@page "/usuarios/create"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject AuthService Auth
+
+<PageTitle>Novo Usuário — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Novo Usuário</div>
+        <div class="page-subtitle">Preencha os dados para criar um novo usuário</div>
+    </div>
+    <a href="usuarios" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        @if (!string.IsNullOrEmpty(erro))
+        {
+            <div class="alert alert-danger">@erro</div>
+        }
+
+        <EditForm Model="request" OnValidSubmit="Salvar">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary-errors" />
+
+            <div class="form-section">
+                <div class="form-section-title">Dados Pessoais</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Nome Completo</label>
+                        <InputText @bind-Value="request.Nome" class="form-control" placeholder="Nome do usuário" />
+                        <ValidationMessage For="@(() => request.Nome)" class="text-danger small" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">E-mail</label>
+                        <InputText @bind-Value="request.Email" class="form-control" placeholder="email@dominio.com" />
+                        <ValidationMessage For="@(() => request.Email)" class="text-danger small" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CPF</label>
+                        <InputText @bind-Value="request.CPF" class="form-control" placeholder="000.000.000-00" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Telefone</label>
+                        <InputText @bind-Value="request.Telefone" class="form-control" placeholder="(00) 00000-0000" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Acesso ao Sistema</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Login</label>
+                        <InputText @bind-Value="request.Login" class="form-control" placeholder="Nome de acesso" />
+                        <ValidationMessage For="@(() => request.Login)" class="text-danger small" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Senha</label>
+                        <InputText @bind-Value="request.Senha" type="password" class="form-control" placeholder="Mínimo 6 caracteres" />
+                        <ValidationMessage For="@(() => request.Senha)" class="text-danger small" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirmar Senha</label>
+                        <InputText @bind-Value="request.ConfirmarSenha" type="password" class="form-control" placeholder="Repita a senha" />
+                        <ValidationMessage For="@(() => request.ConfirmarSenha)" class="text-danger small" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" disabled="@carregando">
+                    @(carregando ? "Salvando..." : "Criar Usuário")
+                </button>
+                <a href="usuarios" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private RegistroRequest request = new();
+    private string erro = string.Empty;
+    private bool carregando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await Auth.EstaLogadoAsync())
+            Nav.NavigateTo("/login");
+    }
+
+    private async Task Salvar()
+    {
+        erro = string.Empty;
+        carregando = true;
+
+        var resp = await Http.PostAsJsonAsync("api/auth/registrar", request);
+        var resultado = await resp.Content.ReadFromJsonAsync<RespostaApi>();
+        carregando = false;
+
+        if (resp.IsSuccessStatusCode)
+            Nav.NavigateTo("usuarios");
+        else
+            erro = resultado?.Mensagem ?? "Erro ao criar usuário.";
+    }
+
+    private record RespostaApi(string Mensagem);
+}

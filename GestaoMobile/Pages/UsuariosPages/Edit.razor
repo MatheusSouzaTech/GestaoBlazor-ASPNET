@@ -1,0 +1,152 @@
+@page "/usuarios/edit/{id:int}"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject AuthService Auth
+
+<PageTitle>Editar Usuário — GestãoPro</PageTitle>
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Editar Usuário</div>
+        <div class="page-subtitle">Atualize os dados do usuário</div>
+    </div>
+    <a href="usuarios" class="btn btn-secondary">← Voltar</a>
+</div>
+
+@if (dto == null)
+{
+    <div class="loading-spinner"><div class="spinner"></div> Carregando...</div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(erro))
+            {
+                <div class="alert alert-danger">@erro</div>
+            }
+            @if (!string.IsNullOrEmpty(sucesso))
+            {
+                <div class="alert alert-success">@sucesso</div>
+            }
+
+            <EditForm Model="dto" OnValidSubmit="Salvar">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary-errors" />
+
+                <div class="form-section">
+                    <div class="form-section-title">Dados Pessoais</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Nome Completo</label>
+                            <InputText @bind-Value="dto.Nome" class="form-control" />
+                            <ValidationMessage For="@(() => dto.Nome)" class="text-danger small" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">E-mail</label>
+                            <InputText @bind-Value="dto.Email" class="form-control" />
+                            <ValidationMessage For="@(() => dto.Email)" class="text-danger small" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CPF</label>
+                            <InputText @bind-Value="dto.CPF" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Telefone</label>
+                            <InputText @bind-Value="dto.Telefone" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-title">Acesso ao Sistema</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Login</label>
+                            <InputText @bind-Value="dto.Login" class="form-control" />
+                            <ValidationMessage For="@(() => dto.Login)" class="text-danger small" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                Nova Senha
+                                <span class="text-muted small">(deixe em branco para manter)</span>
+                            </label>
+                            <InputText @bind-Value="dto.NovaSenha" type="password"
+                                       class="form-control" placeholder="••••••••" />
+                            <ValidationMessage For="@(() => dto.NovaSenha)" class="text-danger small" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-check mb-4">
+                    <InputCheckbox @bind-Value="dto.Ativo" class="form-check-input" id="ativoEdit" />
+                    <label class="form-check-label" for="ativoEdit">Usuário ativo</label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary" disabled="@carregando">
+                        @(carregando ? "Salvando..." : "Salvar Alterações")
+                    </button>
+                    <a href="usuarios" class="btn btn-secondary">Cancelar</a>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private UsuarioEditDto? dto;
+    private string erro    = string.Empty;
+    private string sucesso = string.Empty;
+    private bool   carregando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await Auth.EstaLogadoAsync())
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        var usuario = await Http.GetFromJsonAsync<Usuario>($"api/usuarios/{Id}");
+        if (usuario != null)
+        {
+            dto = new UsuarioEditDto
+            {
+                Id       = usuario.Id,
+                Nome     = usuario.Nome,
+                Email    = usuario.Email,
+                Login    = usuario.Login,
+                Telefone = usuario.Telefone,
+                CPF      = usuario.CPF,
+                Ativo    = usuario.Ativo
+                // NovaSenha fica null intencionalmente
+            };
+        }
+    }
+
+    private async Task Salvar()
+    {
+        if (dto == null) return;
+        erro      = string.Empty;
+        sucesso   = string.Empty;
+        carregando = true;
+
+        var resp      = await Http.PutAsJsonAsync($"api/usuarios/{Id}", dto);
+        var resultado = await resp.Content.ReadFromJsonAsync<RespostaApi>();
+        carregando    = false;
+
+        if (resp.IsSuccessStatusCode)
+        {
+            sucesso       = resultado?.Mensagem ?? "Usuário atualizado com sucesso.";
+            dto.NovaSenha = null;
+        }
+        else
+            erro = resultado?.Mensagem ?? "Erro ao atualizar usuário.";
+    }
+
+    private record RespostaApi(string Mensagem);
+}
+
